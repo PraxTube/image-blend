@@ -87,13 +87,11 @@ def poisson_sparse_matrix(points):
 
 
 # Does Poisson image editing on one channel given a source, target, and mask
-def process(source, target, mask):
+def process(source, target, mask, A):
     indicies = mask_indices(mask)
     N = len(indicies)
-    # Create poisson A matrix. Contains mostly 0's, some 4's and -1's
-    A = poisson_sparse_matrix(indicies)
-    # Create B matrix
     b = np.zeros(N)
+
     for i, index in enumerate(indicies):
         # Start with left hand side of discrete equation
         b[i] = lapl_at_index(source, index)
@@ -137,9 +135,14 @@ def main():
     mask = mask[:, :, 0]
     channels = source_img.shape[-1]
 
+    # Create poisson A matrix. Contains mostly 0's, some 4's and -1's
+    A = poisson_sparse_matrix(mask_indices(mask))
+
+    print("A calculated.")
+
     # Call the poisson method on each individual channel
     result_stack = [
-        process(source_img[:, :, i], target_img[:, :, i], mask) for i in range(channels)
+        process(source_img[:, :, i], target_img[:, :, i], mask, A) for i in range(channels)
     ]
 
     # Merge the channels back into one image
