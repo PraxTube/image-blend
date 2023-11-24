@@ -88,11 +88,11 @@ def poisson_sparse_matrix(points):
 
 # Does Poisson image editing on one channel given a source, target, and mask
 def process(source, target, mask, A):
-    indicies = mask_indices(mask)
-    N = len(indicies)
+    indices = mask_indices(mask)
+    N = len(indices)
     b = np.zeros(N)
 
-    for i, index in enumerate(indicies):
+    for i, index in enumerate(indices):
         # Start with left hand side of discrete equation
         b[i] = lapl_at_index(source, index)
         # If on boundry, add in target intensity
@@ -107,7 +107,7 @@ def process(source, target, mask, A):
     # Copy target photo, make sure as int
     composite = np.copy(target).astype(int)
     # Place new intensity on target at given index
-    for i, index in enumerate(indicies):
+    for i, index in enumerate(indices):
         composite[index] = x[0][i]
     return composite
 
@@ -139,6 +139,7 @@ def main():
     A = poisson_sparse_matrix(mask_indices(mask))
 
     print("A calculated.")
+    print(A.shape)
 
     # Call the poisson method on each individual channel
     result_stack = [
