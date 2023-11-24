@@ -1,6 +1,4 @@
 import os
-import errno
-from os import path
 from glob import glob
 
 import cv2
@@ -13,30 +11,32 @@ OMEGA = 0
 DEL_OMEGA = 1
 OUTSIDE = 2
 
+IMG_EXTENSIONS = ["png", "jpeg", "jpg", "JPG"]
+INPUT_DIR = "input"
+
 
 # Determine if a given index is inside omega, on the boundary (del omega),
 # or outside the omega region
 def point_location(index, mask):
-    if in_omega(index, mask) == False:
+    if not in_omega(index, mask):
         return OUTSIDE
-    if edge(index, mask) == True:
+    if edge(index, mask):
         return DEL_OMEGA
     return OMEGA
 
 
-# Determine if a given index is either outside or inside omega
 def in_omega(index, mask):
     return mask[index] == 1
 
 
 # Deterimine if a given index is on del omega (boundary)
 def edge(index, mask):
-    if in_omega(index, mask) == False:
+    if not in_omega(index, mask):
         return False
     for pt in get_surrounding(index):
         # If the point is inside omega, and a surrounding point is not,
         # then we must be on an edge
-        if in_omega(pt, mask) == False:
+        if not in_omega(pt, mask):
             return True
     return False
 
@@ -86,7 +86,6 @@ def poisson_sparse_matrix(points):
     return A
 
 
-# Main method
 # Does Poisson image editing on one channel given a source, target, and mask
 def process(source, target, mask):
     indicies = mask_indices(mask)
@@ -102,7 +101,7 @@ def process(source, target, mask):
         # Creates constraint lapl source = target at boundary
         if point_location(index, mask) == DEL_OMEGA:
             for pt in get_surrounding(index):
-                if in_omega(pt, mask) == False:
+                if not in_omega(pt, mask):
                     b[i] += target[pt]
 
     # Solve for x, unknown intensities
@@ -115,15 +114,9 @@ def process(source, target, mask):
     return composite
 
 
-# Naive blend, puts the source region directly on the target.
-# Useful for testing
+# Naive copy paste, useful for testing
 def preview(source, target, mask):
     return (target * (1.0 - mask)) + (source * (mask))
-
-
-IMG_EXTENSIONS = ["png", "jpeg", "jpg", "JPG"]
-SRC_FOLDER = "input"
-OUT_FOLDER = "output"
 
 
 def collect_files(prefix, extension_list=IMG_EXTENSIONS):
@@ -131,24 +124,10 @@ def collect_files(prefix, extension_list=IMG_EXTENSIONS):
     return filenames
 
 
-for dirpath, dirnames, fnames in os.walk(SRC_FOLDER):
-    image_dir = os.path.split(dirpath)[-1]
-    output_dir = os.path.join(OUT_FOLDER, image_dir)
-    print(f"Processing input {image_dir}...")
-
-    # Search for images to process
-    source_names = collect_files(os.path.join(dirpath, "*source."))
-    target_names = collect_files(os.path.join(dirpath, "*target."))
-    mask_names = collect_files(os.path.join(dirpath, "*mask."))
-
-    if not len(source_names) == len(target_names) == len(mask_names) == 1:
-        print("There must be one source, one target, and one mask per input.")
-        continue
-
-    # Read images
-    source_img = cv2.imread(source_names[0], cv2.IMREAD_COLOR)
-    target_img = cv2.imread(target_names[0], cv2.IMREAD_COLOR)
-    mask_img = cv2.imread(mask_names[0], cv2.IMREAD_GRAYSCALE)
+def main():
+    source_img = cv2.imread(os.path.join(INPUT_DIR, "source.jpg"), cv2.IMREAD_COLOR)
+    target_img = cv2.imread(os.path.join(INPUT_DIR, "target.jpg"), cv2.IMREAD_COLOR)
+    mask_img = cv2.imread(os.path.join(INPUT_DIR, "mask.jpg"), cv2.IMREAD_GRAYSCALE)
 
     # Normalize mask to range [0,1]
     mask = np.atleast_3d(mask_img).astype(float) / 255.0
@@ -157,19 +136,17 @@ for dirpath, dirnames, fnames in os.walk(SRC_FOLDER):
     # Trim to one channel
     mask = mask[:, :, 0]
     channels = source_img.shape[-1]
+
     # Call the poisson method on each individual channel
     result_stack = [
-        process(source_img[:, :, i], target_img[:, :, i], mask)
-        for i in range(channels)
+        process(source_img[:, :, i], target_img[:, :, i], mask) for i in range(channels)
     ]
+
     # Merge the channels back into one image
     result = cv2.merge(result_stack)
-    # Make result directory if needed
-    try:
-        os.makedirs(output_dir)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-    # Write result
-    cv2.imwrite(path.join(output_dir, "result.png"), result)
-    print("Finished processing input {image_dir}.")
+    cv2.imwrite("result.png", result)
+
+
+if __name__ == "__main__":
+    print("Processing...")
+    main()
