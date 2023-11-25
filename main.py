@@ -18,7 +18,7 @@ def simple_merge(h, g, p):
     p = (p[1], p[0])
     n, m = g.shape
     D = laplace_operator(n, m)
-    b = g.flatten("F")
+    b = D @ g.flatten("F")
     x, exit_code = scipy.sparse.linalg.cg(D, b, maxiter=10000)
 
     if exit_code != 0:
@@ -27,10 +27,7 @@ def simple_merge(h, g, p):
     if not (p[0] + n <= h.shape[0] and p[1] + m <= h.shape[1]):
         raise ValueError("Given position is outside of target image")
 
-    print(np.allclose(D.dot(x), b))
-
-    print(x)
-    h[p[0] : p[0] + n, p[1] : p[1] + m] = x.reshape((n, m))
+    h[p[0] : p[0] + n, p[1] : p[1] + m] = x.reshape((n, m)).real
     return h
 
 
