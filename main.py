@@ -15,10 +15,12 @@ def laplace_operator(n, m):
 
 
 def simple_merge(h, g, p):
+    g = g[1:-1, 1:-1]
     p = (p[1], p[0])
     n, m = g.shape
+
     D = laplace_operator(n, m)
-    b = D @ g.flatten("F")
+    b = D @ g.flatten("C")
     x, exit_code = scipy.sparse.linalg.cg(D, b, maxiter=10000)
 
     if exit_code != 0:
@@ -27,12 +29,12 @@ def simple_merge(h, g, p):
     if not (p[0] + n <= h.shape[0] and p[1] + m <= h.shape[1]):
         raise ValueError("Given position is outside of target image")
 
-    h[p[0] : p[0] + n, p[1] : p[1] + m] = x.reshape((n, m)).real
+    h[p[0] : p[0] + n, p[1] : p[1] + m] = x.reshape((n, m))
     return h
 
 
-h = io.imread("input/target.png")
-g = io.imread("input/source.png")
+h = io.imread("input/target.jpg")
+g = io.imread("input/source.jpg")
 p = (5, 5)
 
 red_image = simple_merge(h[:, :, 0].copy(), g[:, :, 0], p)
