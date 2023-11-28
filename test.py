@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 
 
-def laplace_operator(n, m):
+def laplace_operator(m, n):
     I_m = scipy.sparse.identity(m)
     D_n = scipy.sparse.diags((-2, 1, 1), (0, 1, -1), (n, n))
 
@@ -12,33 +12,34 @@ def laplace_operator(n, m):
     return scipy.sparse.kron(I_m, D_n) + scipy.sparse.kron(I_n, D_m)
 
 
-n = 4  # Change this value to adjust the size of the array
+m = 3
+n = 6
 
-C = scipy.sparse.eye(n * n, dtype=int, format="lil")
-mask = np.zeros((n * n), dtype=bool)
-mask[n:n * n - n] = True
+C = scipy.sparse.eye(m * n, dtype=int, format="lil")
+mask = np.zeros((m * n), dtype=bool)
+mask[m:m * n - m] = True
 C[mask, mask] = 0
 # print(C.toarray())
 
 
-E = scipy.sparse.eye(n * n, dtype=int, format='lil')
+E = scipy.sparse.eye(m * n, dtype=int, format='lil')
 
-F = scipy.sparse.eye(n * n, dtype=int, format='lil')
+F = scipy.sparse.eye(m * n, dtype=int, format='lil')
 F -= E
 
-mask = np.zeros((n * n,), dtype=bool)
-mask[n::n] = True
-mask[2 * n - 1::n] = True
+mask = np.zeros((m * n,), dtype=bool)
+mask[m::m] = True
+mask[2 * m - 1::m] = True
 F[mask, mask] = 1
-mask = np.zeros((n * n), dtype=bool)
-mask[n * n - n:] = True
+mask = np.zeros((m * n), dtype=bool)
+mask[m * n - m:] = True
 F[mask, mask] = 0
 
-H = scipy.sparse.eye(n * n, dtype=int, format='lil')
+H = scipy.sparse.eye(m * n, dtype=int, format='lil')
 H -= C
 H -= F
 
-D = laplace_operator(n, n)
+D = laplace_operator(m, n)
 D = H @ D
 
 R = C + F + D
