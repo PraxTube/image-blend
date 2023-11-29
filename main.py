@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.testing as npt
 import scipy
 import matplotlib.pyplot as plt
 from skimage import io
@@ -17,23 +18,23 @@ def laplace_operator(m, n):
 def calculate_C(m, n):
     C = scipy.sparse.eye(m * n, dtype=int, format="lil")
     mask = np.zeros((m * n), dtype=bool)
-    mask[m:m * n - m] = True
+    mask[m : m * n - m] = True
     C[mask, mask] = 0
 
     return C
 
 
 def calculate_F(m, n):
-    E = scipy.sparse.eye(m * n, dtype=int, format='lil')
-    F = scipy.sparse.eye(m * n, dtype=int, format='lil')
+    E = scipy.sparse.eye(m * n, dtype=int, format="lil")
+    F = scipy.sparse.eye(m * n, dtype=int, format="lil")
     F -= E
 
     mask = np.zeros((m * n,), dtype=bool)
     mask[m::m] = True
-    mask[2 * m - 1::m] = True
+    mask[2 * m - 1 :: m] = True
     F[mask, mask] = 1
     mask = np.zeros((m * n), dtype=bool)
-    mask[m * n - m:] = True
+    mask[m * n - m :] = True
     F[mask, mask] = 0
 
     return F
@@ -42,7 +43,7 @@ def calculate_F(m, n):
 def calculate_H(m, n):
     C = calculate_C(m, n)
     F = calculate_F(m, n)
-    H = scipy.sparse.eye(m * n, dtype=int, format='lil')
+    H = scipy.sparse.eye(m * n, dtype=int, format="lil")
     H -= C
     H -= F
 
@@ -90,18 +91,38 @@ def simple_merge(h_star, g, p):
     return h_star
 
 
-h = io.imread("input/target.jpg")
-g = io.imread("input/source.jpg")
-p = (5, 5)
+def test():
+    # Test
+    m = 5
+    n = 10
+    for i in range(10):
+        R = (
+            calculate_C(m + i, n + i)
+            + calculate_F(m + i, n + i)
+            + calculate_H(m + i, n + i)
+            - scipy.sparse.eye((m + i) * (n + i))
+        )
+        assert R.nnz == 0
+    print("Test passed\n")
 
-red_image = simple_merge(h[:, :, 0].copy(), g[:, :, 0], p)
-green_image = simple_merge(h[:, :, 1].copy(), g[:, :, 1], p)
-blue_image = simple_merge(h[:, :, 2].copy(), g[:, :, 2], p)
 
-image = np.stack((red_image, green_image, blue_image), axis=2)
+def main():
+    h = io.imread("input/water.jpg")
+    g = io.imread("input/bear.jpg")
+    p = (5, 5)
 
-print(f"Image shape: {image.shape}")
-print(f"Image data type: {image.dtype}")
+    red_image = simple_merge(h[:, :, 0].copy(), g[:, :, 0], p)
+    green_image = simple_merge(h[:, :, 1].copy(), g[:, :, 1], p)
+    blue_image = simple_merge(h[:, :, 2].copy(), g[:, :, 2], p)
 
-plt.imshow(image)
-plt.show()
+    image = np.stack((red_image, green_image, blue_image), axis=2)
+
+    print(f"Image shape: {image.shape}")
+
+    plt.imshow(image)
+    plt.show()
+
+
+if __name__ == "__main__":
+    test()
+    main()

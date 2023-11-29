@@ -3,7 +3,7 @@ from scipy import sparse
 
 n = 16  # Change this value to adjust the size of the array
 
-sparse_result = sparse.eye(n, dtype=int, format='lil')
+sparse_result = sparse.eye(n, dtype=int, format="lil")
 
 mask = np.zeros((n,), dtype=bool)
 mask[0::3] = True

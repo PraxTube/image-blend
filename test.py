@@ -17,25 +17,25 @@ n = 6
 
 C = scipy.sparse.eye(m * n, dtype=int, format="lil")
 mask = np.zeros((m * n), dtype=bool)
-mask[m:m * n - m] = True
+mask[m : m * n - m] = True
 C[mask, mask] = 0
 # print(C.toarray())
 
 
-E = scipy.sparse.eye(m * n, dtype=int, format='lil')
+E = scipy.sparse.eye(m * n, dtype=int, format="lil")
 
-F = scipy.sparse.eye(m * n, dtype=int, format='lil')
+F = scipy.sparse.eye(m * n, dtype=int, format="lil")
 F -= E
 
 mask = np.zeros((m * n,), dtype=bool)
 mask[m::m] = True
-mask[2 * m - 1::m] = True
+mask[2 * m - 1 :: m] = True
 F[mask, mask] = 1
 mask = np.zeros((m * n), dtype=bool)
-mask[m * n - m:] = True
+mask[m * n - m :] = True
 F[mask, mask] = 0
 
-H = scipy.sparse.eye(m * n, dtype=int, format='lil')
+H = scipy.sparse.eye(m * n, dtype=int, format="lil")
 H -= C
 H -= F
 
