@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.testing as npt
 import scipy
 import matplotlib.pyplot as plt
 from skimage import io
@@ -71,7 +70,14 @@ def calculate_b(m, n, h, g):
     return A @ b
 
 
-def simple_merge(h_star, g, p):
+def naive_blending(h_star, g, p):
+    m, n = g.shape
+    p = (p[1], p[0])
+    h_star[p[0] : p[0] + m, p[1] : p[1] + n] = g
+    return h_star
+
+
+def laplace_blending(h_star, g, p):
     g = g[1:-1, 1:-1]
     m, n = g.shape
     p = (p[1], p[0])
@@ -91,38 +97,79 @@ def simple_merge(h_star, g, p):
     return h_star
 
 
-def test():
-    # Test
-    m = 5
-    n = 10
-    for i in range(10):
-        R = (
-            calculate_C(m + i, n + i)
-            + calculate_F(m + i, n + i)
-            + calculate_H(m + i, n + i)
-            - scipy.sparse.eye((m + i) * (n + i))
-        )
-        assert R.nnz == 0
-    print("Test passed\n")
+def gray_laplace_blending(h, g, p):
+    h_gray = (h * 255).astype(int)
+    g_gray = (g * 255).astype(int)
+
+    image = laplace_blending(h_gray, g_gray, p).astype(float) / 255.0
+    return image
+
+
+def bear_water_example(naive_blend=False):
+    h = io.imread("input/water.jpg")
+    g = io.imread("input/bear.jpg")
+    p = (10, 80)
+
+    if naive_blend:
+        red_image = naive_blending(h[:, :, 0].copy(), g[:, :, 0], p)
+        green_image = naive_blending(h[:, :, 1].copy(), g[:, :, 1], p)
+        blue_image = naive_blending(h[:, :, 2].copy(), g[:, :, 2], p)
+    else:
+        red_image = laplace_blending(h[:, :, 0].copy(), g[:, :, 0], p)
+        green_image = laplace_blending(h[:, :, 1].copy(), g[:, :, 1], p)
+        blue_image = laplace_blending(h[:, :, 2].copy(), g[:, :, 2], p)
+
+    image = np.stack((red_image, green_image, blue_image), axis=2)
+    return image
+
+
+def plane_bird_example(naive_blend=False):
+    h = io.imread("input/bird.jpg")
+    g = io.imread("input/plane.jpg")
+    p = (400, 50)
+
+    if naive_blend:
+        red_image = naive_blending(h[:, :, 0].copy(), g[:, :, 0], p)
+        green_image = naive_blending(h[:, :, 1].copy(), g[:, :, 1], p)
+        blue_image = naive_blending(h[:, :, 2].copy(), g[:, :, 2], p)
+    else:
+        red_image = laplace_blending(h[:, :, 0].copy(), g[:, :, 0], p)
+        green_image = laplace_blending(h[:, :, 1].copy(), g[:, :, 1], p)
+        blue_image = laplace_blending(h[:, :, 2].copy(), g[:, :, 2], p)
+
+    image = np.stack((red_image, green_image, blue_image), axis=2)
+    return image
 
 
 def main():
-    h = io.imread("input/water.jpg")
-    g = io.imread("input/bear.jpg")
-    p = (5, 5)
+    print("WARNING: This will take some time. The program will compute a lot of redundant matrices.")
+    images = [
+        bear_water_example(True),
+        plane_bird_example(True),
+        bear_water_example(),
+        plane_bird_example(),
+    ]
+    titles = [
+        "Naive Blend - Bear in Water",
+        "Naive Blend - Plane and Bird",
+        "Laplace Blend - Bear in Water",
+        "Laplace Blend - Plane and Bird",
+    ]
 
-    red_image = simple_merge(h[:, :, 0].copy(), g[:, :, 0], p)
-    green_image = simple_merge(h[:, :, 1].copy(), g[:, :, 1], p)
-    blue_image = simple_merge(h[:, :, 2].copy(), g[:, :, 2], p)
+    # Create a figure and subplots based on the number of images
+    fig, axes = plt.subplots(2, 2, figsize=(2 * 5, 2 * 5))
 
-    image = np.stack((red_image, green_image, blue_image), axis=2)
+    for i in range(len(images)):
+        row = i // 2
+        col = i % 2
+        axes[row, col].imshow(images[i])
+        axes[row, col].set_title(titles[i])
+        axes[row, col].axis("off")
 
-    print(f"Image shape: {image.shape}")
-
-    plt.imshow(image)
+    plt.tight_layout()
     plt.show()
 
 
 if __name__ == "__main__":
-    test()
-    main()
+    # main()
+    print(laplace_operator(5, 7).toarray())
