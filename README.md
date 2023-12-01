@@ -2,7 +2,9 @@
 
 ## Blended Images
 
-TODO
+<p align="center">
+    <img src="output/result.png" alt="blended images" />
+</p>
 
 ## Laplace Operator
 
@@ -36,4 +38,4 @@ It's also somewhat visible in the laplace blend in the plane-bird
 image. The pixels seems shifted in row/column which suggests that there
 is some bug with that indices.
 
-They grayscale of the images didn't reveal any insight regarding this bug either.
+The grayscale of the images didn't reveal any insight regarding this bug either.
